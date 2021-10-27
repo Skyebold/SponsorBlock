@@ -25,6 +25,7 @@ export class DescriptionSegment {
 	private lastCharacters:string;
 	private hash:string;
 	private length:number;
+	private originalText:string; // only present if user added during this page load (server does not store)
 
 	public static readonly MAX_SURROUNDING_CHARACTERS_TO_CAPTURE:number = 5;
 
@@ -56,6 +57,7 @@ export class DescriptionSegment {
 		descriptionSegment.length = highlightedString.length;
 
 		descriptionSegment.submitted = false;
+		descriptionSegment.originalText = highlightedString;
 
 		return descriptionSegment;
 	}
@@ -101,5 +103,24 @@ export class DescriptionSegment {
 	public getLength():number
 	{
 		return this.length;
+	}
+
+	/**
+	 * Gets text that can be shown in the tools tab.  Note it won't necessarily be the full string,
+	 * as server does not store it.
+	 */
+	public getUserReadableText():string
+	{
+		if (this.originalText == null)
+		{
+			// Original text is no longer available, so display what is available:
+			let limitedText:string = this.firstCharacters;
+			for (let i:number = this.firstCharacters.length; i < this.length - this.firstCharacters.length - this.lastCharacters.length; i++)
+				limitedText += ".";
+			limitedText += this.lastCharacters;
+			return limitedText;
+		}
+		else
+			return this.originalText;
 	}
 }

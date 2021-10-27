@@ -19,6 +19,7 @@ import { SkipButtonControlBar } from "./js-components/skipButtonControlBar";
 import { Tooltip } from "./render/Tooltip";
 import { getStartTimeFromUrl } from "./utils/urlParser";
 import { getControls } from "./utils/pageUtils";
+import { DescriptionSegmentManager } from "./js-components/descriptionSegmentManager";
 
 // Hack to get the CSS loaded on permission-based sites (Invidious)
 utils.wait(() => Config.config !== null, 5000, 10).then(addCSS);
@@ -334,6 +335,7 @@ async function videoIDChange(id) {
 		return descriptionContainer !== null
 	}).then(() => {
 		createDescriptionEditPanel();
+		DescriptionSegmentManager.instance.applyAllActiveRedactions();
 	}).catch();
 	// TODO: Do we need to do anything special for youtube mobile?
 

@@ -15,8 +15,13 @@ export class DescriptionEditPanel {
     onInvidious: boolean;
 
 	constructor(parent: HTMLElement, onMobileYouTube: boolean, onInvidious: boolean) {
-        this.container = document.createElement('div');
-        this.container.id = 'descriptionEditPanel';
+		// Handle rare case of plugin being reloaded in dev mode:
+		this.container = document.getElementById('descriptionEditPanel') as HTMLDivElement;
+		if (this.container == null) // Typically would be null as plugin needs to create this
+		{
+        	this.container = document.createElement('div');
+        	this.container.id = 'descriptionEditPanel';
+		}
 
         this.parent = parent;
 		this.immediatelyBefore = parent;
@@ -25,7 +30,6 @@ export class DescriptionEditPanel {
 
         this.createElement(parent);
 		this.writeContents();
-		this.registerButtonListeners();
     }
 
 	createElement(parent: HTMLElement): void {
@@ -70,19 +74,25 @@ export class DescriptionEditPanel {
 		// If any currently flagged segments:	
 		if (segments.length > 0)
 		{
-			toolsText +=  "<p>Flagged segments:<ul>";
+			toolsText +=  "<p>Flagged segments:<table><tr><th>ID</th><th>Text</th><th>Actions</th></tr>";
 			segments.forEach(segment => {
-				toolsText += "<li>";
-				toolsText += segment.getHash();
+				toolsText += "<tr><td>";
+				toolsText += "TBD" // ID
+				toolsText += "</td><td>"
+				toolsText += segment.getUserReadableText(); // TODO, sanitize HTML->TXT
+				toolsText += "</td><td>"
+				toolsText += "actions";
+				toolsText += "</td></tr>"
+				//toolsText += segment.getHash();
 				// TODO, options and maybe move this whole thing to a table for easier readability
 				//toolsText += "<li>qwer [Type: Sponsor] [Remove] [Vote Up] [Vote Down]</li>";
-				toolsText += "</li>";
+				//toolsText += "</li>";
 			});
 			
-			toolsText += "</ul>[Submit]";
+			toolsText += "</table>";
 		} else {
 			// No flagged segments, encourage user to flag
-			toolsText += "Remove sponsored messages from video descriptions!  To get started, select a string of text " + 
+			toolsText += "<p>Remove sponsored messages from video descriptions!  To get started, select a string of text " + 
 			"in the video description, then click flag segment." 
 		}
 
@@ -104,6 +114,8 @@ export class DescriptionEditPanel {
 			test = test.parentElement;
 		}
 		*/
+
+		this.registerButtonListeners();
 	}
 
 	private registerButtonListeners():void {
