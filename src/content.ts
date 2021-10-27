@@ -8,6 +8,7 @@ const utils = new Utils();
 import runThePopup from "./popup";
 
 import PreviewBar, {PreviewBarSegment} from "./js-components/previewBar";
+import { DescriptionEditPanel } from "./js-components/descriptionEditPanel";
 import SkipNotice from "./render/SkipNotice";
 import SkipNoticeComponent from "./components/SkipNoticeComponent";
 import SubmissionNotice from "./render/SubmissionNotice";
@@ -79,6 +80,9 @@ let channelWhitelisted = false;
 // create preview bar
 let previewBar: PreviewBar = null;
 let skipButtonControlBar: SkipButtonControlBar = null;
+
+// create description edit panel
+let descriptionEditPanel: DescriptionEditPanel = null;
 
 /** Element containing the player controls on the YouTube player. */
 let controls: HTMLElement | null = null;
@@ -321,6 +325,10 @@ async function videoIDChange(id) {
         } else {
             utils.wait(getControls).then(createPreviewBar);
         }
+
+		// TODO: Do we need to do anything special for youtube mobile?
+		// TODO: Should we search specifically for description panel, or maybe it's not necessary?
+		utils.wait(getControls).then(createDescriptionEditPanel);
     }
 
     //close popup
@@ -388,6 +396,40 @@ function createPreviewBar(): void {
             break;
         }
     }
+}
+
+function createDescriptionEditPanel():void {
+	if (descriptionEditPanel !== null) return;
+
+    const progressElementSelectors = [
+        // For mobile YouTube
+        ////".progress-bar-background",
+        // For YouTube
+        ////".ytp-progress-bar-container",
+        ////".no-model.cue-range-markers",
+		//"#collapsible",
+		//"#container" // collapsile won't be shown if the description isn't long enough, so use this as a fallback
+		"#meta-contents"
+        // For Invidious/VideoJS
+        ////".vjs-progress-holder"
+    ];
+
+    for (const selector of progressElementSelectors) {
+        const el = document.querySelector<HTMLElement>(selector);
+
+        if (el) {
+            descriptionEditPanel = new DescriptionEditPanel(el, onMobileYouTube, onInvidious);
+
+            break;
+        }
+    }
+
+	
+
+	if (descriptionEditPanel == null)
+		console.warn("SBDESCRIPTION - Create description edit panel did not find a relevant element");
+	else
+		console.debug("SBDESCRIPTION - Create description edit panel found an element");
 }
 
 /**
