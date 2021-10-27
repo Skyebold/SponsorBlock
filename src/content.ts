@@ -325,11 +325,17 @@ async function videoIDChange(id) {
         } else {
             utils.wait(getControls).then(createPreviewBar);
         }
-
-		// TODO: Do we need to do anything special for youtube mobile?
-		// TODO: Should we search specifically for description panel, or maybe it's not necessary?
-		utils.wait(getControls).then(createDescriptionEditPanel);
     }
+
+	// Setup description
+	// Description is often loaded later than the main video, so it may need to be waited for
+	utils.wait(() => {
+		let descriptionContainer = document.getElementById("description") ;
+		return descriptionContainer !== null
+	}).then(() => {
+		createDescriptionEditPanel();
+	}).catch();
+	// TODO: Do we need to do anything special for youtube mobile?
 
     //close popup
     closeInfoMenu();
