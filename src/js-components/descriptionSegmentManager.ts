@@ -26,6 +26,8 @@ export class DescriptionSegmentManager {
 		console.debug("SBDESCRIPTION - Size before add: " + this.descriptionSegmentList.length);
 		this.descriptionSegmentList.push(descriptionSegment);
 		console.debug("SBDESCRIPTION - Size after add: " + this.descriptionSegmentList.length);
+
+		this.applyAllActiveRedactions();
 	}
 
 	public removeSegment(descriptionSegment:DescriptionSegment):void
@@ -94,7 +96,7 @@ export class DescriptionSegmentManager {
 		// TODO - convert links back to links
 		// TODO - output sanitized text
 		// Convert linebreaks to <BR>
-		redactedDescription = redactedDescription.replace('\n', "<p>");
+		redactedDescription = redactedDescription.replace(/\n/g, "<br>");
 		descriptionContainer.innerHTML = redactedDescription;
 	}
 
@@ -106,8 +108,19 @@ export class DescriptionSegmentManager {
 			var htmlElement:HTMLElement = node as HTMLElement;
 			if (htmlElement != null)	
 			{
-				if (htmlElement.innerText != null) // TODO - pull full URL's instead of just partial ones
-					return htmlElement.innerText;
+				if (htmlElement.nodeName == "A") // Link
+				{
+					// Parse URLs
+					let rawUrl:string = (htmlElement as HTMLLinkElement).href;
+					let displayUrl:string = htmlElement.innerText;
+
+					// rawUrl most likely contains a link to YouTube's redirect system instead of a direct site link
+					// TODO: Should we filter it out?  If youtube changes their links, it would break our filtering
+
+					return "<a href='" + rawUrl + "' + target='_blank'>" + displayUrl + "</a>";
+				}
+				else if (htmlElement.innerText != null) 
+					return htmlElement.innerText; // Regular text
 				return "";
 			}
 

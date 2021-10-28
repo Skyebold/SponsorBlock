@@ -82,7 +82,36 @@ export class DescriptionSegment {
 	 */
 	public redact(input:string):string
 	{
-		return "TODO / REDACTIONS ARE COOL.";
+		let i:number = 0;
+		while (i+this.length < input.length)
+		{
+			let compareFirstCharacters:string = input.substring(i, i+this.firstCharacters.length);
+			//console.debug("SBDESCRIPTION: Compare first characters: [" + compareFirstCharacters + "] VS [" + this.firstCharacters + "]");
+			if (compareFirstCharacters == this.firstCharacters)
+			{
+				// Is matching based on first characters
+				console.debug("SBDESCRIPTION: First char match!");
+
+				let compareLastCharacters:string = input.substring(i+this.length-this.lastCharacters.length, i+this.length);
+				console.debug("SBDESCRIPTION: Compare last characters: [" + compareLastCharacters + "] VS [" + this.lastCharacters + "]");
+				if (compareLastCharacters == this.lastCharacters)
+				{
+					// Is matching based on last characters
+					console.debug("SBDESCRIPTION: Last char match!");
+
+					if (true) // TODO Check hash
+					{
+						// Hash is matching
+
+						// Redact this chunk of the description
+						return input.substring(0, i) + input.substring(i+this.length);
+					}
+				}
+			}
+			i++;
+		}
+
+		return input;
 	}
 
 	public getFirstCharacters():string
