@@ -83,7 +83,7 @@ export class DescriptionSegment {
 	public redact(input:string):string
 	{
 		let i:number = 0;
-		while (i+this.length < input.length)
+		while (i+this.length <= input.length)
 		{
 			let compareFirstCharacters:string = input.substring(i, i+this.firstCharacters.length);
 			//console.debug("SBDESCRIPTION: Compare first characters: [" + compareFirstCharacters + "] VS [" + this.firstCharacters + "]");
@@ -104,7 +104,26 @@ export class DescriptionSegment {
 						// Hash is matching
 
 						// Redact this chunk of the description
-						return input.substring(0, i) + input.substring(i+this.length);
+						// The naive method would be:
+						// return input.substring(0, i) + input.substring(i+this.length);
+						// However, this would result in random bits of whitespace in the description.
+						
+						// So also search backwards and grab any preceeding whitespace
+						let startRedactionPosition:number = i;
+						while (startRedactionPosition > 0 && (input[startRedactionPosition] == ' ' || input[startRedactionPosition] == '\n'))
+							startRedactionPosition--;
+
+						// Also search forwards and grab any trailing whitespace
+						let stopRedactionPosition:number = i+this.length;
+						while (stopRedactionPosition<input.length-1 && (input[stopRedactionPosition] == ' ' || input[stopRedactionPosition] == '\n'))
+							stopRedactionPosition++;
+
+						// Now build the redacted text by returning everything but the redacted portion
+						let redactedText:string = input.substring(0, startRedactionPosition);
+						if (stopRedactionPosition < input.length)
+							redactedText += input.substring(stopRedactionPosition)
+
+						return redactedText;
 					}
 				}
 			}

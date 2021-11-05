@@ -93,11 +93,44 @@ export class DescriptionSegmentManager {
 			redactedDescription = descriptionSegment.redact(redactedDescription);
 		});
 
-		// TODO - convert links back to links
-		// TODO - output sanitized text
+		console.debug("SBDESCRIPTION  Redacted Video description is: " + redactedDescription);
+
+		// paragraphs that are empty should be removed		
+		//redactedDescription = redactedDescription.replace(new RegExp('(\n){3,}', 'gim') , '');
+
+		console.debug("SBDESCRIPTION  Extra newlined video description is: " + redactedDescription);
+
 		// Convert linebreaks to <BR>
 		redactedDescription = redactedDescription.replace(/\n/g, "<br>");
+
+		// TODO - convert links back to links
+		redactedDescription = this.linkify(redactedDescription);
+
+		// TODO - output sanitized text
+
+		// Update user-displayed description
 		descriptionContainer.innerHTML = redactedDescription;
+	}
+
+	private linkify(inputText:string):string
+	{
+		// based on https://stackoverflow.com/questions/49634850/convert-plain-text-links-to-clickable-links
+
+		var replacedText, replacePattern1, replacePattern2, replacePattern3;
+	
+		//URLs starting with http://, https://, or ftp://
+		replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+		replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+	
+		//URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+		replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+		replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+	
+		//Change email addresses to mailto:: links.
+		replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+		replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+	
+		return replacedText;
 	}
 
 	private recursivelyConvertElementToText(node:Element):string
@@ -115,9 +148,30 @@ export class DescriptionSegmentManager {
 					let displayUrl:string = htmlElement.innerText;
 
 					// rawUrl most likely contains a link to YouTube's redirect system instead of a direct site link
-					// TODO: Should we filter it out?  If youtube changes their links, it would break our filtering
 
-					return "<a href='" + rawUrl + "' + target='_blank'>" + displayUrl + "</a>";
+					// Get real URL -- this circumvents YouTube's redirect system because description subsystem only
+					// parses text, not URLs (some mapping would be needed to retain short URLS).  It would be best
+					// not to store youtube redirect URLs since youtube may change their redirect algo at some point,
+					// and break every URL stored in the database.
+
+					// RawURL probably looks like:
+					// https://www.youtube.com/redirect?event=video_description&redir_token=LONGTEXT&q=https%3A%2F%2Fwww.website.com
+					let url:URL = new URL(rawUrl);
+					let realLinkAddress:string = url.searchParams.get("q");
+
+					// NOTE: This does not shorten the url.  If we want to support that, we need to create in memory
+					// some kind of display<->url mapping so urls can still be parsed out.
+					// TODO: Maybe support shortened URLs?  (Low priority)
+					/*
+					if (realLinkAddress != null)
+						return "<a href='" + realLinkAddress + "' + target='_blank'>" + realLinkAddress + "</a>"; 
+					else
+						return "<a href='" + rawUrl + "' + target='_blank'>" + displayUrl + "</a>"; 
+						*/
+					if (realLinkAddress != null)
+						return realLinkAddress;
+					else
+						return rawUrl;  // Isn't using YT redirect, so probably a YT link
 				}
 				else if (htmlElement.innerText != null) 
 					return htmlElement.innerText; // Regular text
