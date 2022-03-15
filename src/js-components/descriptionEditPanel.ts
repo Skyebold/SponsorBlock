@@ -52,6 +52,8 @@ export class DescriptionEditPanel {
         // On the seek bar
         //this.parent.prepend(this.container);
 
+		console.debug("SBDESCRIPTION - creating new description panel inside element: " + this.parent.id);
+
 		//document.body.insertBefore(this.container, this.parent);
 		this.parent.append(this.container);
     }
@@ -140,5 +142,34 @@ export class DescriptionEditPanel {
 				this.writeContents(); // update tools panel with new description segement data
 			}
 		});
+	}
+
+	public static findParentForDescriptionEditPanel():HTMLDivElement
+	{
+		const progressElementSelectors = [
+			// For mobile YouTube
+			////".progress-bar-background",
+			// For YouTube
+			////".ytp-progress-bar-container",
+			////".no-model.cue-range-markers",
+			//"#collapsible",
+			//"#container" // collapsile won't be shown if the description isn't long enough, so use this as a fallback
+			//"#meta-contents"
+			//"#meta-contents" 
+			//".ytd-video-secondary-info-renderer[id='container']" // This will put it outside
+			".ytd-video-secondary-info-renderer[id='description']"
+			// For Invidious/VideoJS
+			////".vjs-progress-holder"
+		];
+
+		for (const selector of progressElementSelectors) {
+			let el = document.querySelector<HTMLElement>(selector);
+
+			if (el) {
+				// Description found; grab its parent
+				//el = el.parentElement;
+				return el as HTMLDivElement;
+			}
+		}
 	}
 }

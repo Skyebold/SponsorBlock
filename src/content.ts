@@ -331,10 +331,11 @@ async function videoIDChange(id) {
 	// Setup description
 	// Description is often loaded later than the main video, so it may need to be waited for
 	utils.wait(() => {
-		let descriptionContainer = document.getElementById("description") ;
-		return descriptionContainer !== null
+		return DescriptionEditPanel.findParentForDescriptionEditPanel() != null;  // TODO: Is there perf implications for looping over this?
+		//let descriptionContainer = document.getElementById("description") ;
+		//return descriptionContainer !== null
 	}).then(() => {
-		createDescriptionEditPanel();
+		createDescriptionEditPanel(DescriptionEditPanel.findParentForDescriptionEditPanel());
 		DescriptionSegmentManager.instance.applyAllActiveRedactions();
 	}).catch();
 	// TODO: Do we need to do anything special for youtube mobile?
@@ -406,33 +407,11 @@ function createPreviewBar(): void {
     }
 }
 
-function createDescriptionEditPanel():void {
-	if (descriptionEditPanel !== null) return;
-
-    const progressElementSelectors = [
-        // For mobile YouTube
-        ////".progress-bar-background",
-        // For YouTube
-        ////".ytp-progress-bar-container",
-        ////".no-model.cue-range-markers",
-		//"#collapsible",
-		//"#container" // collapsile won't be shown if the description isn't long enough, so use this as a fallback
-		"#meta-contents"
-        // For Invidious/VideoJS
-        ////".vjs-progress-holder"
-    ];
-
-    for (const selector of progressElementSelectors) {
-        const el = document.querySelector<HTMLElement>(selector);
-
-        if (el) {
-            descriptionEditPanel = new DescriptionEditPanel(el, onMobileYouTube, onInvidious);
-
-            break;
-        }
-    }
-
-	
+function createDescriptionEditPanel(parent:HTMLDivElement):void {
+	if (descriptionEditPanel == null && parent != null) {
+		console.warn("SBDESCRIPTION - Attempting to create description edit panel...");
+		descriptionEditPanel = new DescriptionEditPanel(parent, onMobileYouTube, onInvidious);
+	}
 
 	if (descriptionEditPanel == null)
 		console.warn("SBDESCRIPTION - Create description edit panel did not find a relevant element");

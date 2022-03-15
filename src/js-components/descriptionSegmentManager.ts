@@ -2,6 +2,7 @@
 
 import Config from "../config";
 import Utils from "../utils";
+import { DescriptionEditPanel } from "./descriptionEditPanel";
 import { DescriptionSegment } from "./descriptionSegment";
 const utils = new Utils();
 
@@ -50,8 +51,12 @@ export class DescriptionSegmentManager {
 		// Need to grab description from page element first
 
 		// First, we can't simply grab #description since YT re-uses that ID for some reason
-		let descriptionContainer:HTMLElement = null;
-		let allDescriptions = document.querySelectorAll<HTMLElement>("#description");
+		let descriptionContainer:HTMLElement = DescriptionEditPanel.findParentForDescriptionEditPanel() as HTMLElement;
+
+		// Now, descend into the element that contains only the description
+		descriptionContainer = descriptionContainer.getElementsByTagName("yt-formatted-string")[0] as HTMLElement;
+		
+		/*let allDescriptions = document.querySelectorAll<HTMLElement>("#description");
 		allDescriptions.forEach(node => {
 			if (node.parentElement.id == "content")
 			{
@@ -60,6 +65,7 @@ export class DescriptionSegmentManager {
 			}
 			console.debug("SBDESCRIPTION - parent is " + node.parentElement.id);
 		});
+		*/
 
 		if (this.rawDescription == null)
 		{
@@ -109,6 +115,7 @@ export class DescriptionSegmentManager {
 		// TODO - output sanitized text
 
 		// Update user-displayed description
+		console.log("SBDESCRIPTION Updating description contents into " + descriptionContainer.id);
 		descriptionContainer.innerHTML = redactedDescription;
 	}
 
@@ -162,6 +169,7 @@ export class DescriptionSegmentManager {
 					// NOTE: This does not shorten the url.  If we want to support that, we need to create in memory
 					// some kind of display<->url mapping so urls can still be parsed out.
 					// TODO: Maybe support shortened URLs?  (Low priority)
+					// TODO: Supporting short urls for timestamps would be very handy though
 					/*
 					if (realLinkAddress != null)
 						return "<a href='" + realLinkAddress + "' + target='_blank'>" + realLinkAddress + "</a>"; 
