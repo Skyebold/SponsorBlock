@@ -41,20 +41,9 @@ export class DescriptionSegmentManager {
 		return this.descriptionSegmentList;
 	}
 
-	/**
-	 * Video description before redaction is applied
-	 */
-	private rawDescription:string;
-
 	public applyAllActiveRedactions():void
 	{
-		// Need to grab description from page element first
-
-		// First, we can't simply grab #description since YT re-uses that ID for some reason
-		let descriptionContainer:HTMLElement = DescriptionEditPanel.findParentForDescriptionEditPanel() as HTMLElement;
-
-		// Now, descend into the element that contains only the description
-		descriptionContainer = descriptionContainer.getElementsByTagName("yt-formatted-string")[0] as HTMLElement;
+		
 		
 		/*let allDescriptions = document.querySelectorAll<HTMLElement>("#description");
 		allDescriptions.forEach(node => {
@@ -67,8 +56,57 @@ export class DescriptionSegmentManager {
 		});
 		*/
 
-		if (this.rawDescription == null)
+		this.applyAllActiveRedactionsToDescription();
+		this.applyAllActiveRedactionsToComments();
+	}
+
+	private applyAllActiveRedactionsToDescription():void
+	{
+		// Need to grab description from page element first
+
+		// First, we can't simply grab #description since YT re-uses that ID for some reason
+		let descriptionContainer:HTMLElement = DescriptionEditPanel.findParentForDescriptionEditPanel() as HTMLElement;
+
+		// Now, descend into the element that contains only the description
+		descriptionContainer = descriptionContainer.getElementsByTagName("yt-formatted-string")[0] as HTMLElement;
+
+		this.applyAllActiveRedactionsToContainer(descriptionContainer);
+	}
+
+	private applyAllActiveRedactionsToComments():void
+	{
+		const progressElementSelectors = [
+			// For YouTube
+			".ytd-comment-renderer[id='expander']"
+		];
+
+		for (const selector of progressElementSelectors) {
+			let elementList = document.querySelectorAll<HTMLElement>(selector);
+
+			for (const element of elementList)
+			{
+				if (element != null)
+				{
+					this.applyAllActiveRedactionsToContainer(element);
+				}
+			}
+		}
+	}
+
+	// Video description / comment before redaction is applied.
+	// (Modifying the displayed description/comments means they will change -- in order to undo these changes, keep the
+	// original version on hand so things can be unredacted if desired.)
+	private rawDescriptionMap:Map<HTMLElement, string> = new Map<HTMLElement, string>();
+
+	private applyAllActiveRedactionsToContainer(descriptionContainer:HTMLElement):void
+	{
+		let rawDescription:string = null;
+
+		if (!this.rawDescriptionMap.has(descriptionContainer))
 		{
+			// First time seeing this container, save the original value for later in case undo is needed / can re-redact
+			// as needed based on the original value.
+
 			//let descriptionContainer = document.getElementById("description");
 			if (descriptionContainer == null)
 			{
@@ -77,29 +115,24 @@ export class DescriptionSegmentManager {
 			}
 			//this.rawDescription = descriptionContainer.textContent;
 			// Nope!  YouTube creates div's for each link, so this needs to be reconvered back to regular text
-
-			/*
-			let descriptionSubContainer = descriptionContainer.firstChild;
-
-			this.rawDescription = "";
-			descriptionSubContainer.childNodes.forEach(node => {
-				this.rawDescription += node.textContent;
-			});
-			*/
-			this.rawDescription = this.recursivelyConvertElementToText(descriptionContainer);
 			
+			rawDescription = this.recursivelyConvertElementToText(descriptionContainer);
+			
+			this.rawDescriptionMap.set(descriptionContainer, rawDescription);
 
 			//this.rawDescription = $("#description").text();
+		} else {
+			rawDescription = this.rawDescriptionMap.get(descriptionContainer);
 		}
 
-		console.debug("SBDESCRIPTION  Video description is: " + this.rawDescription);
+		console.debug("SBDESCRIPTION  Redacting original description is: " + rawDescription);
 
-		let redactedDescription:string = this.rawDescription;
+		let redactedDescription:string = rawDescription;
 		this.descriptionSegmentList.forEach(descriptionSegment => {
 			redactedDescription = descriptionSegment.redact(redactedDescription);
 		});
 
-		console.debug("SBDESCRIPTION  Redacted Video description is: " + redactedDescription);
+		console.debug("SBDESCRIPTION  Redacted modified description is: " + redactedDescription);
 
 		// paragraphs that are empty should be removed		
 		//redactedDescription = redactedDescription.replace(new RegExp('(\n){3,}', 'gim') , '');
